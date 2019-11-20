@@ -72,13 +72,14 @@ class Plugboard:
     def transform(self, letter:str) -> str:
         return self.steckerbrett[letter]
 
-class Reflector:
-    def __init__(self):
-        pass
+class Reflector(Plugboard):
+    def __init__(self, **kwargs):
+        super(Reflector, self).__init__(**kwargs)
 
-    def transform(self, letter: str) -> str:
-        pass
+    def set_reflector(self, mapping: dict(str, str)) -> None:
+        self.set_plugboard(mapping)
     
+
 class EnigmaMachine:
     def __init__(self):
         self.plugboard = Plugboard()
