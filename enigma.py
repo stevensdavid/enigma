@@ -88,9 +88,9 @@ class EnigmaMachine:
     def transform(self, letter: str) -> str:
         sequence = [
             self.plugboard.transform, 
-            self.rotor_group.transform(forward=True), 
+            lambda l: self.rotor_group.transform(l, forward=True), 
             self.reflector.transform, 
-            self.rotor_group.transform(forward=False), 
+            lambda l: self.rotor_group.transform(l, forward=False), 
             self.reflector.transform
         ]
         return reduce(lambda l, f: f(l), sequence, letter)
