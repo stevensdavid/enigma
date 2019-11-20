@@ -1,5 +1,6 @@
 from random import randrange
 from functools import reduce
+from typing import Iterable
 
 ALPHABET = list(map(chr, range(ord('A'),ord('Z')+1)))
 
@@ -19,9 +20,19 @@ class RotorGroup:
         else:
             return reduce(lambda r, l: r.transform(l), reversed(self.rotors), letter)
 
+    def choose_rotors(self, *rotors: Iterable(int)) -> None:
+        self.rotors = [Rotor(x) for x in rotors]
+
 
 class Rotor:
     def __init__(self, number: int):
+        self.encrypt = {}
+        self.turnover_points = []
+        self.step = 'A'
+
+        self.change_rotor(number)
+
+    def change_rotor(self, number: int):
         encryption = {
             1: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ', 
             2: 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
@@ -33,8 +44,6 @@ class Rotor:
             8: 'FKQHTLXOCBJSPDZRAMEWNIUYGV'
         }
         self.encrypt = {k:v for k,v in zip(ALPHABET, encryption[number])}
-        self.step = 'A'
-
         turnovers = {
             1:['Q'],
             2:['E'],
@@ -83,8 +92,8 @@ class Reflector(Plugboard):
 class EnigmaMachine:
     def __init__(self):
         self.plugboard = Plugboard()
-        self.rotor_group = RotorGroup([])
-        self.reflector = Reflector
+        self.rotor_group = RotorGroup([1,2,3])
+        self.reflector = Reflector()
 
     def transform(self, letter: str) -> str:
         sequence = [
@@ -97,7 +106,8 @@ class EnigmaMachine:
         return reduce(lambda l, f: f(l), sequence, letter)
 
     def set_rotors(self, rotor1: int, rotor2: int, rotor3: int) -> None:
-        pass
+        self.rotor_group.choose_rotors(rotor1, rotor2, rotor3)
+
 
 if __name__ == "__main__":
     enigma = EnigmaMachine()
