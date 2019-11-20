@@ -7,7 +7,7 @@ class RotorGroup:
     def __init__(self, rotors: list(int)):
         self.rotors = [Rotor(x) for x in rotors]
 
-    def transform(self, letter, forward=True):
+    def transform(self, letter: str, forward:bool =True) -> str:
         if forward:
             r1, r2, r3 = self.rotors
             r1.increment()
@@ -44,7 +44,7 @@ class Rotor:
         }.update({n:['Z','M'] for n in (6,7,8)})
         self.turnover_points = turnovers[number]
 
-    def increment(self):
+    def increment(self) -> None:
         # 'A' is 65 in ASCII, 26 letters in alphabet
         self.step = chr(((ord(self.step) - 65 + 1) % 26) + 65)
 
@@ -52,16 +52,22 @@ class Rotor:
         return self.encrypt[letter]
 
 class Plugboard:
-    def __init__(self):
+    def __init__(self, mapping=None):
         letters: list(str) = ALPHABET
-        self.steckerbrett = {}
-        while len(letters) > 0:
-            x = randrange(0, len(letters))
-            a = letters.pop(x)
-            y = randrange(0, len(letters))
-            b = letters.pop(y)
-            self.steckerbrett[a], self.steckerbrett[b] = b, a
-        print(self.steckerbrett)
+        if mapping:
+            self.steckerbrett = mapping
+        else:
+            # Default to random mapping
+            self.steckerbrett = {}
+            while len(letters) > 0:
+                x = randrange(0, len(letters))
+                a = letters.pop(x)
+                y = randrange(0, len(letters))
+                b = letters.pop(y)
+                self.steckerbrett[a], self.steckerbrett[b] = b, a
+
+    def set_plugboard(self, mapping: dict(str,str)) -> None:
+        self.steckerbrett = mapping
 
     def transform(self, letter:str) -> str:
         pass
@@ -89,7 +95,7 @@ class EnigmaMachine:
         ]
         return reduce(lambda l, f: f(l), sequence, letter)
 
-    def set_rotors(self, rotor1, rotor2, rotor3):
+    def set_rotors(self, rotor1: int, rotor2: int, rotor3: int) -> None:
         pass
 
 if __name__ == "__main__":
