@@ -4,9 +4,11 @@ from typing import Iterable
 
 ALPHABET = list(map(chr, range(ord('A'),ord('Z')+1)))
 
+
 class RotorGroup:
-    def __init__(self, rotors: list(int)):
-        self.rotors = [Rotor(x) for x in rotors]
+    def __init__(self, rotors: list(int) = None, steps: list(str)=None):
+        self.rotors = []
+        self.choose_rotors(rotors, steps)
 
     def transform(self, letter: str, forward:bool =True) -> str:
         if forward:
@@ -20,15 +22,19 @@ class RotorGroup:
         else:
             return reduce(lambda r, l: r.transform(l), reversed(self.rotors), letter)
 
-    def choose_rotors(self, *rotors: Iterable(int)) -> None:
-        self.rotors = [Rotor(x) for x in rotors]
+    def choose_rotors(self, rotors: list(int) = None, steps: list(str)=None) -> None:
+        if not rotors:
+            rotors = [1,2,3]
+        if not steps:
+            steps = ['A','A','A']
+        self.rotors = [Rotor(r,s) for r,s in zip(rotors,steps)]
 
 
 class Rotor:
-    def __init__(self, number: int):
+    def __init__(self, number: int, step: str):
         self.encrypt = {}
         self.turnover_points = []
-        self.step = 'A'
+        self.step = step
 
         self.change_rotor(number)
 
@@ -60,6 +66,7 @@ class Rotor:
     def transform(self, letter: str) -> str:
         return self.encrypt[letter]
 
+
 class Plugboard:
     def __init__(self, mapping=None):
         letters: list(str) = ALPHABET
@@ -81,18 +88,24 @@ class Plugboard:
     def transform(self, letter:str) -> str:
         return self.steckerbrett[letter]
 
+
 class Reflector(Plugboard):
-    def __init__(self, **kwargs):
-        super(Reflector, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(Reflector, self).__init__(*args, **kwargs)
     
 
 class EnigmaMachine:
-    def __init__(self):
-        self.plugboard = Plugboard()
-        self.rotor_group = RotorGroup([1,2,3])
-        self.reflector = Reflector()
+    def __init__(self, pb_map: dict(str,str) = None, r_map: dict(str,str) = None, rotors: list(int) = None):
+        print('Creating enigma')
+        self.plugboard = Plugboard(pb_map)
+        self.rotor_group = RotorGroup(rotors)
+        self.reflector = Reflector(r_map)
 
     def transform(self, letter: str) -> str:
+        """Encrypt the letter
+
+        >>> 
+        """
         sequence = [
             self.plugboard.transform, 
             lambda l: self.rotor_group.transform(l, forward=True), 
@@ -103,7 +116,7 @@ class EnigmaMachine:
         return reduce(lambda l, f: f(l), sequence, letter)
 
     def set_rotors(self, rotor1: int, rotor2: int, rotor3: int) -> None:
-        self.rotor_group.choose_rotors(rotor1, rotor2, rotor3)
+        self.rotor_group.choose_rotors([rotor1, rotor2, rotor3])
 
     def set_reflector(self, mapping: dict(str,str)) -> None:
         self.reflector.set_mapping(mapping)
@@ -113,6 +126,9 @@ class EnigmaMachine:
 
 
 if __name__ == "__main__":
-    enigma = EnigmaMachine()
-    result = ''.join(map(enigma.transform, 'hello'))
-    print(result)
+    import doctest
+    doctest.testmod(extraglobs={'e':EnigmaMachine(pb_map={
+
+    }, r_map={
+
+    }, rotors=[])})
