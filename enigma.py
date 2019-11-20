@@ -70,7 +70,7 @@ class Plugboard:
         self.steckerbrett = mapping
 
     def transform(self, letter:str) -> str:
-        pass
+        return self.steckerbrett[letter]
 
 class Reflector:
     def __init__(self):
