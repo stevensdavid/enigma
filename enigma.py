@@ -49,7 +49,7 @@ class Rotor:
         self.step = chr(((ord(self.step) - 65 + 1) % 26) + 65)
 
     def transform(self, letter: str) -> str:
-        pass
+        return self.encrypt[letter]
 
 class Plugboard:
     def __init__(self):
