@@ -7,11 +7,17 @@ class RotorGroup:
     def __init__(self, rotors: list(int)):
         self.rotors = [Rotor(x) for x in rotors]
 
-    def transform(self, forward=True):
+    def transform(self, letter, forward=True):
         if forward:
-            pass
+            r1, r2, r3 = self.rotors
+            r1.increment()
+            if r1.step in r1.turnover_points:
+                r2.increment()
+                if r2.step in r2.turnover_points:
+                    r3.increment()
+            return reduce(lambda r, l: r.transform(l), self.rotors, letter)
         else:
-            pass
+            return reduce(lambda r, l: r.transform(l), reversed(self.rotors), letter)
 
 
 class Rotor:
@@ -27,7 +33,7 @@ class Rotor:
             8: 'FKQHTLXOCBJSPDZRAMEWNIUYGV'
         }
         self.encrypt = {k:v for k,v in zip(ALPHABET, encryption[number])}
-        self.step = 0
+        self.step = 'A'
 
         turnovers = {
             1:['Q'],
@@ -36,10 +42,11 @@ class Rotor:
             4:['J'],
             5:['Z']
         }.update({n:['Z','M'] for n in (6,7,8)})
-        self.turnover_character = turnovers[number]
+        self.turnover_points = turnovers[number]
 
     def increment(self):
-        self.step = (self.step + 1) % 26
+        # 'A' is 65 in ASCII, 26 letters in alphabet
+        self.step = chr(((ord(self.step) - 65 + 1) % 26) + 65)
 
     def transform(self, letter: str) -> str:
         pass
