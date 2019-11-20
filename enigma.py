@@ -18,6 +18,9 @@ class RotorGroup:
                 r2.increment()
                 if r2.step in r2.turnover_points:
                     r3.increment()
+                    if r3.step in r3.turnover_points:
+                        # Double step
+                        r2.increment()
             return reduce(lambda r, l: r.transform(l), self.rotors, letter)
         else:
             return reduce(lambda r, l: r.transform(l), reversed(self.rotors), letter)
@@ -64,7 +67,8 @@ class Rotor:
         self.step = chr(((ord(self.step) - 65 + 1) % 26) + 65)
 
     def transform(self, letter: str) -> str:
-        return self.encrypt[letter]
+        offset_letter = chr((ord(letter) + ord(self.step) - 2*65) % 26  + 65)
+        return self.encrypt[offset_letter]
 
 
 class Plugboard:
@@ -86,26 +90,40 @@ class Plugboard:
         self.steckerbrett = mapping
 
     def transform(self, letter:str) -> str:
-        return self.steckerbrett[letter]
+        return self.steckerbrett[letter] if letter in self.steckerbrett else letter
 
 
 class Reflector(Plugboard):
-    def __init__(self, *args, **kwargs):
-        super(Reflector, self).__init__(*args, **kwargs)
+    def __init__(self, reflector_type = None):
+        if not reflector_type:
+            reflector_type = 'B'
+        if reflector_type == 'B':
+            ukw = {k:v for k,v in zip(ALPHABET,'YRUHQSLDPXNGOKMIEBFZCWVJAT')}
+        elif reflector_type == 'C'
+            ukw = {k:v for k,v in zip(ALPHABET,'FVPJIAOYEDRZXWGCTKUQSBNMHL')}
+        else:
+            raise ValueError('Only type B and C are supported')
+        super(Reflector, self).__init__(mapping=ukw)
     
 
 class EnigmaMachine:
-    def __init__(self, pb_map: dict(str,str) = None, r_map: dict(str,str) = None, rotors: list(int) = None):
+    def __init__(self, pb_map: dict(str,str) = None, reflector: str = None, rotors: list(int) = None, steps: list(str) = None):
         print('Creating enigma')
         self.plugboard = Plugboard(pb_map)
-        self.rotor_group = RotorGroup(rotors)
-        self.reflector = Reflector(r_map)
+        self.rotor_group = RotorGroup(rotors, steps)
+        self.reflector = Reflector(reflector)
 
-    def transform(self, letter: str) -> str:
-        """Encrypt the letter
+    def encrypt_message(self, msg: str) -> str:
+        """Encrypt the message
 
-        >>> 
+        >>> e.encrypt('DEUTSCHETRUPPENSINDJETZTINENGLAND')
+        QSZVIDVMPNEXACMRWWXUIYOTYNGVVXDZ
+        >>> e.encrypt('QSZVIDVMPNEXACMRWWXUIYOTYNGVVXDZ')
+        DEUTSCHETRUPPENSINDJETZTINENGLAND
         """
+        return ''.join(map(self.encrypt, msg))
+
+    def encrypt(self, letter: str) -> str:
         sequence = [
             self.plugboard.transform, 
             lambda l: self.rotor_group.transform(l, forward=True), 
@@ -127,8 +145,21 @@ class EnigmaMachine:
 
 if __name__ == "__main__":
     import doctest
-    doctest.testmod(extraglobs={'e':EnigmaMachine(pb_map={
-
-    }, r_map={
-
-    }, rotors=[])})
+    # Test using the 18th day of the month in the German Luftwaffe Enigma key list number 649
+    # TODO: figure out a correct test case
+    plugboard_map = {
+        'E':'J',
+        'O':'Y',
+        'I':'V',
+        'A':'Q',
+        'K':'W',
+        'F':'X',
+        'M':'T',
+        'P':'S',
+        'L':'U',
+        'B':'D'
+    }
+    rotors = [2,4,5]
+    steps = ['B','V','M']
+    enigma = EnigmaMachine(pb_map=plugboard_map, reflector='B', rotors=rotors, steps=steps)
+    doctest.testmod(extraglobs={'e':enigma})
