@@ -75,7 +75,7 @@ class Plugboard:
                 b = letters.pop(y)
                 self.steckerbrett[a], self.steckerbrett[b] = b, a
 
-    def set_plugboard(self, mapping: dict(str,str)) -> None:
+    def set_mapping(self, mapping: dict(str,str)) -> None:
         self.steckerbrett = mapping
 
     def transform(self, letter:str) -> str:
@@ -84,9 +84,6 @@ class Plugboard:
 class Reflector(Plugboard):
     def __init__(self, **kwargs):
         super(Reflector, self).__init__(**kwargs)
-
-    def set_reflector(self, mapping: dict(str, str)) -> None:
-        self.set_plugboard(mapping)
     
 
 class EnigmaMachine:
@@ -107,6 +104,12 @@ class EnigmaMachine:
 
     def set_rotors(self, rotor1: int, rotor2: int, rotor3: int) -> None:
         self.rotor_group.choose_rotors(rotor1, rotor2, rotor3)
+
+    def set_reflector(self, mapping: dict(str,str)) -> None:
+        self.reflector.set_mapping(mapping)
+
+    def set_plugboard(self, mapping: dict(str,str)) -> None:
+        self.plugboard.set_mapping(mapping)
 
 
 if __name__ == "__main__":
