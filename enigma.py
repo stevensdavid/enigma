@@ -25,15 +25,23 @@ class Plugboard:
 
     def transform(self, letter:str) -> str:
         pass
+
+class Reflector:
+    def __init__(self):
+        pass
+
+    def transform(self, letter: str) -> str:
+        pass
     
 class EnigmaMachine:
     def __init__(self):
         self.plugboard = Plugboard()
         self.rotors = []
+        self.reflector = Reflector
 
     def transform(self, letter: str) -> str:
-        sequence = [self.plugboard.transform] + list(map(lambda r: r.transform, self.rotors)) + [self.plugboard.transform]
-        return reduce(lambda l, f: f(l), sequence, letter)
+        sequence = [self.plugboard, *self.rotors, self.reflector, *reversed(self.rotors), self.reflector]
+        return reduce(lambda l, f: f.transform(l), sequence, letter)
 
     def set_rotors(self, rotor1, rotor2, rotor3):
         pass
