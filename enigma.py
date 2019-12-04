@@ -4,9 +4,8 @@ from typing import Iterable, List, Dict
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 class RotorGroup:
-    def __init__(self, rotors: List[int] = None, ringstellung: List[int] = None):
-        self.rotors = []
-        self.choose_rotors(rotors, ringstellung)
+    def __init__(self, rotors: List[int], ringstellung: List[int]):
+        self.rotors = self.choose_rotors(rotors, ringstellung)
 
     def transform(self, letter: str, forward: bool = True) -> str:
         if forward:
@@ -20,28 +19,25 @@ class RotorGroup:
             return letter
 
     def increment_first(self):
-        r1, r2, r3 = self.rotors
+        r1, r2, _ = self.rotors
         if r1.step in r1.turnover_points or r2.step in r2.turnover_points:
             # second clause is double step
             self.increment_second()
         r1.increment()
 
     def increment_second(self):
-        r1, r2, r3 = self.rotors
+        r2 = self.rotors[1]
         if r2.step in r2.turnover_points:
             self.increment_third()
         r2.increment()
 
     def increment_third(self):
-        r1, r2, r3 = self.rotors
-        r3.increment()
+        self.rotors[2].increment()
 
-    def choose_rotors(self, rotors: List[int] = None, ringstellung: List[int] = None) -> None:
-        if not rotors:
-            rotors = [1, 2, 3]
-        if not ringstellung:
-            ringstellung = [1,1,1]
-        self.rotors = [Rotor(r, s) for r, s in zip(rotors, ringstellung)]
+    def choose_rotors(self, rotors: List[int], ringstellung: List[int] = None) -> None:
+        if ringstellung is None:
+            ringstellung = [0,0,0]
+        return [Rotor(r, s) for r, s in zip(rotors, ringstellung)]
 
     def increment_rotor(self, rotor: int) -> str:
         self.rotors[rotor].increment()
@@ -65,7 +61,6 @@ class Rotor:
         self.change_rotor(number,ringstellung)
 
     def change_rotor(self, number: int,ringstellung):
-        global ALPHABET
         encryption = {
             1: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
             2: 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
@@ -76,11 +71,7 @@ class Rotor:
             7: 'NZJHGRCXMYSWBOUFAIVLPEKQDT',
             8: 'FKQHTLXOCBJSPDZRAMEWNIUYGV'
         }
-        a = ALPHABET
         selected_enc = encryption[number]
-        # offset_alphabet = ALPHABET[ringstellung:] + ALPHABET[:ringstellung]
-        # offset_encoding = [selected_enc[(i+ringstellung)%len(selected_enc)] 
-        #                    for i in range(len(selected_enc))]
         self.encrypt = {k: v for k, v in zip(ALPHABET, selected_enc)}
         self.reverse_encrypt = {v:k for k,v in self.encrypt.items()}
         turnovers = {
@@ -106,21 +97,10 @@ class Rotor:
 
 
 class Plugboard:
-    def __init__(self, mapping=None):
-        if mapping is not None:
-            reflected_mapping = {v:k for k,v in mapping.items()}
-            mapping.update(reflected_mapping)
-            self.steckerbrett = mapping
-        else:
-            # Default to random mapping
-            letters: List[str] = ALPHABET
-            self.steckerbrett = {}
-            while len(letters) > 0:
-                x = randrange(0, len(letters))
-                a = letters.pop(x)
-                y = randrange(0, len(letters))
-                b = letters.pop(y)
-                self.steckerbrett[a], self.steckerbrett[b] = b, a
+    def __init__(self, mapping: Dict[str, str]):
+        reflected_mapping = {v:k for k,v in mapping.items()}
+        mapping.update(reflected_mapping)
+        self.steckerbrett = mapping
 
     def set_mapping(self, mapping: Dict[str, str]) -> None:
         self.steckerbrett = mapping
@@ -130,9 +110,7 @@ class Plugboard:
 
 
 class Reflector(Plugboard):
-    def __init__(self, reflector_type=None):
-        if not reflector_type:
-            reflector_type = 'B'
+    def __init__(self, reflector_type):
         if reflector_type == 'B':
             ukw = {k: v for k, v in zip(
                 ALPHABET, 'YRUHQSLDPXNGOKMIEBFZCWVJAT')}
@@ -145,9 +123,8 @@ class Reflector(Plugboard):
 
 
 class EnigmaMachine:
-    def __init__(self, pb_map: Dict[str, str] = None, 
-                reflector: str = None, rotors: List[int] = None, 
-                ringstellung: List[int] = None):
+    def __init__(self, pb_map: Dict[str, str], reflector: str, 
+                 rotors: List[int], ringstellung: List[int]):
         self._pb_map = pb_map
         self._reflector = reflector
         self._rotors = rotors
