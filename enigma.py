@@ -3,6 +3,7 @@ from typing import Iterable, List, Dict
 
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
+
 class RotorGroup:
     def __init__(self, rotors: List[int], ringstellung: List[int]):
         self.rotors = self.choose_rotors(rotors, ringstellung)
@@ -20,7 +21,8 @@ class RotorGroup:
 
     def increment_first(self):
         r1, r2, _ = self.rotors
-        if r1.step in r1.turnover_points or r2.step in r2.turnover_points:
+        if (r1.step in r1.turnover_points 
+            or r2.step in r2.turnover_points):
             # second clause is double step
             self.increment_second()
         r1.increment()
@@ -34,9 +36,10 @@ class RotorGroup:
     def increment_third(self):
         self.rotors[2].increment()
 
-    def choose_rotors(self, rotors: List[int], ringstellung: List[int] = None) -> None:
+    def choose_rotors(self, rotors: List[int], 
+                      ringstellung: List[int] = None) -> None:
         if ringstellung is None:
-            ringstellung = [0,0,0]
+            ringstellung = [0, 0, 0]
         return [Rotor(r, s) for r, s in zip(rotors, ringstellung)]
 
     def increment_rotor(self, rotor: int) -> str:
@@ -58,9 +61,9 @@ class Rotor:
         self.type = number
         self.ringstellung = ringstellung
 
-        self.change_rotor(number,ringstellung)
+        self.change_rotor(number, ringstellung)
 
-    def change_rotor(self, number: int,ringstellung):
+    def change_rotor(self, number: int, ringstellung):
         encryption = {
             1: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
             2: 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
@@ -73,7 +76,7 @@ class Rotor:
         }
         selected_enc = encryption[number]
         self.encrypt = {k: v for k, v in zip(ALPHABET, selected_enc)}
-        self.reverse_encrypt = {v:k for k,v in self.encrypt.items()}
+        self.reverse_encrypt = {v: k for k, v in self.encrypt.items()}
         turnovers = {
             1: ['Q'],
             2: ['E'],
@@ -90,15 +93,24 @@ class Rotor:
         self.step = chr(((ord(self.step) - 65 + 1) % 26) + 65)
 
     def transform(self, letter: str, forward: bool) -> str:
-        offset_letter = chr((ord(letter) + ord(self.step) - self.ringstellung - 2*65) % 26 + 65)
-        transformed = self.encrypt[offset_letter] if forward else self.reverse_encrypt[offset_letter]
-        offset = chr((ord(transformed) - ord(self.step) + self.ringstellung - 2*65) % 26 + 65)
+        offset_letter = chr(
+            (
+                ord(letter) + ord(self.step) - self.ringstellung - 2*65
+            ) % 26 + 65
+        )
+        if forward:
+            transformed = self.encrypt[offset_letter]
+        else:
+            transformed = self.reverse_encrypt[offset_letter]
+        offset = chr((
+            ord(transformed) - ord(self.step) + self.ringstellung - 2*65
+        ) % 26 + 65)
         return offset
 
 
 class Plugboard:
     def __init__(self, mapping: Dict[str, str]):
-        reflected_mapping = {v:k for k,v in mapping.items()}
+        reflected_mapping = {v: k for k, v in mapping.items()}
         mapping.update(reflected_mapping)
         self.steckerbrett = mapping
 
@@ -106,7 +118,9 @@ class Plugboard:
         self.steckerbrett = mapping
 
     def transform(self, letter: str) -> str:
-        return self.steckerbrett[letter] if letter in self.steckerbrett else letter
+        return (self.steckerbrett[letter] 
+                if letter in self.steckerbrett 
+                else letter)
 
 
 class Reflector(Plugboard):
@@ -123,7 +137,7 @@ class Reflector(Plugboard):
 
 
 class EnigmaMachine:
-    def __init__(self, pb_map: Dict[str, str], reflector: str, 
+    def __init__(self, pb_map: Dict[str, str], reflector: str,
                  rotors: List[int], ringstellung: List[int]):
         self._pb_map = pb_map
         self._reflector = reflector
@@ -140,10 +154,12 @@ class EnigmaMachine:
         Examples
         --------
         The famous Operation Barbarossa message's first part:
-        >>> plugboard_map = { 'A': 'V', 'B': 'S', 'C': 'G', 'D': 'L', 'F': 'U', 'H': 'Z', 'I': 'N', 'K': 'M', 'O': 'W', 'R': 'X' }
+        >>> plugboard_map = { 'A': 'V', 'B': 'S', 'C': 'G', 'D': 'L', 
+        ... 'F': 'U', 'H': 'Z', 'I': 'N', 'K': 'M', 'O': 'W', 'R': 'X' }
         >>> rotors = [5, 4, 2]
         >>> ringstellung = [11, 20, 1]
-        >>> enigma = EnigmaMachine(pb_map=plugboard_map, reflector='B', rotors=rotors, ringstellung=ringstellung)
+        >>> enigma = EnigmaMachine(pb_map=plugboard_map, reflector='B', 
+        ... rotors=rotors, ringstellung=ringstellung)
         >>> while enigma.rotor_position(0) != 'A':
         ...     _ = enigma.increment_rotor(0)
         ...
@@ -155,13 +171,24 @@ class EnigmaMachine:
         ...
         >>> from copy import copy
         >>> e = copy(enigma)
-        >>> e.encrypt_message('AUFKLXABTEILUNGXVONXKURTINOWAXKURTINOWAXNORDWESTLXSEBEZXSEBEZXUAFFLIEGERSTRASZERIQTUNGXDUBROWKIXDUBROWKIXOPOTSCHKAXOPOTSCHKAXUMXEINSAQTDREINULLXUHRANGETRETENXANGRIFFXINFXRGTX')
-        'EDPUDNRGYSZRCXNUYTPOMRMBOFKTBZREZKMLXLVEFGUEYSIOZVEQMIKUBPMMYLKLTTDEISMDICAGYKUACTCDOMOHWXMUUIAUBSTSLRNBZSZWNRFXWFYSSXJZVIJHIDISHPRKLKAYUPADTXQSPINQMATLPIFSVKDASCTACDPBOPVHJK'
+        >>> e.encrypt_message('EDPUD NRGYS ZRCXN UYTPO MRMBO FKTBZ ' +
+        ... 'REZKM LXLVE FGUEY SIOZV EQMIK UBPMM YLKLT TDEIS MDICA ' + 
+        ... 'GYKUA CTCDO MOHWX MUUIA UBSTS LRNBZ SZWNR FXWFY SSXJZ ' +
+        ... 'VIJHI DISHP RKLKA YUPAD TXQSP INQMA TLPIF SVKDA SCTAC ' + 
+        ... 'DPBOP VHJK')
+        'AUFKLXABTEILUNGXVONXKURTINOWAXKURTINOWAXNORDWESTLXSEBEZXSEBEZX\
+UAFFLIEGERSTRASZERIQTUNGXDUBROWKIXDUBROWKIXOPOTSCHKAXOPOTSCHKAXUMXEINSA\
+QTDREINULLXUHRANGETRETENXANGRIFFXINFXRGTX'
         >>> e = copy(enigma)
-        >>> e.encrypt_message('EDPUDNRGYSZRCXNUYTPOMRMBOFKTBZREZKMLXLVEFGUEYSIOZVEQMIKUBPMMYLKLTTDEISMDICAGYKUACTCDOMOHWXMUUIAUBSTSLRNBZSZWNRFXWFYSSXJZVIJHIDISHPRKLKAYUPADTXQSPINQMATLPIFSVKDASCTACDPBOPVHJK')
-        'AUFKLXABTEILUNGXVONXKURTINOWAXKURTINOWAXNORDWESTLXSEBEZXSEBEZXUAFFLIEGERSTRASZERIQTUNGXDUBROWKIXDUBROWKIXOPOTSCHKAXOPOTSCHKAXUMXEINSAQTDREINULLXUHRANGETRETENXANGRIFFXINFXRGTX'
+        >>> e.encrypt_message('AUFKLXABTEILUNGXVONXKURTINOWAXKURTINOW' +
+        ... 'AXNORDWESTLXSEBEZXSEBEZXUAFFLIEGERSTRASZERIQTUNGXDUBROWK' +
+        ... 'IXDUBROWKIXOPOTSCHKAXOPOTSCHKAXUMXEINSAQTDREINULLXUHRANG' +
+        ... 'ETRETENXANGRIFFXINFXRGTX')
+        'EDPUDNRGYSZRCXNUYTPOMRMBOFKTBZREZKMLXLVEFGUEYSIOZVEQMIKUBPMMYL\
+KLTTDEISMDICAGYKUACTCDOMOHWXMUUIAUBSTSLRNBZSZWNRFXWFYSSXJZVIJHIDISHPRKL\
+KAYUPADTXQSPINQMATLPIFSVKDASCTACDPBOPVHJK'
         """
-        return ''.join(map(self.encrypt, msg))
+        return ''.join(map(self.encrypt, msg.replace(' ', '').upper()))
 
     def encrypt(self, letter: str) -> str:
         sequence = [
@@ -191,7 +218,8 @@ class EnigmaMachine:
         return self.rotor_group.rotor_position(rotor)
 
     def __copy__(self):
-        other = EnigmaMachine(self._pb_map,self._reflector,self._rotors,self._ringstellung)
+        other = EnigmaMachine(self._pb_map, self._reflector,
+                              self._rotors, self._ringstellung)
         while other.rotor_position(0) != self.rotor_position(0):
             other.increment_rotor(0)
         while other.rotor_position(1) != self.rotor_position(1):
