@@ -1,6 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton
-from PyQt5.QtGui import QPixmap, QPalette
+from PyQt5.QtGui import QPixmap, QPalette, QFont
+from PyQt5.QtCore import Qt
 from enigma import EnigmaMachine
 from enigma_config_window import EnigmaConfigWindow
 from copy import copy
@@ -49,7 +50,9 @@ class EnigmaWindow(QWidget):
         self.result = None
         self.keyboard = {}
         self.lamps = {}
+        self.visible_settings = {}
         self.initUI()
+        self.update_shown_rotor_positions()
 
     
     def initUI(self):
@@ -70,6 +73,15 @@ class EnigmaWindow(QWidget):
         knob.setStyleSheet("border: 0px; border-radius:32;")
         knob.clicked.connect(self.open_settings)
 
+        # Create visible rotor settings
+        for idx, pos in enumerate(("left","middle","right")):
+            label = QLabel(self)
+            label.setGeometry(140+86*idx, 236, 30, 59)
+            label.setStyleSheet('color: white;font: 40px arial')
+            label.setAlignment(Qt.AlignCenter)
+            self.visible_settings[pos] = label
+
+        # Create lamps and keyboard
         button_spacing = 23+52
         top_row = ['Q','W','E','R','T','Z','U','I','O']
         middle_row = ['A','S','D','F','G','H','J','K']
@@ -99,6 +111,13 @@ class EnigmaWindow(QWidget):
             button.released.connect(partial(self.key_released, letter))
 
         self.show()
+
+    def update_shown_rotor_positions(self):
+        settings = self.enigma.rotor_positions()
+        self.visible_settings['left'].setText(settings[0])
+        self.visible_settings['middle'].setText(settings[1])
+        self.visible_settings['right'].setText(settings[2])
+
 
     def open_settings(self):
         settings_dialog = EnigmaConfigWindow()

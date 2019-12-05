@@ -231,6 +231,9 @@ KAYUPADTXQSPINQMATLPIFSVKDASCTACDPBOPVHJK'
     def rotor_position(self, rotor: str) -> str:
         return self.rotor_group.rotor_position(rotor)
 
+    def rotor_positions(self) -> List[str]:
+        return self.rotor_group.rotor_positions()
+
     def __copy__(self):
         other = EnigmaMachine(self._pb_map, self._reflector,
                               self._rotors, self._ringstellung)

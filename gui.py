@@ -27,4 +27,5 @@ if __name__ == '__main__':
 
     while ex.enigma.rotor_position('left') != 'B':
         ex.enigma.increment_rotor('left')
+    ex.update_shown_rotor_positions()
     sys.exit(app.exec_())
