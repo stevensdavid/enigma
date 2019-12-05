@@ -2,6 +2,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton
 from PyQt5.QtGui import QPixmap, QPalette
 from enigma import EnigmaMachine
+from enigma_config_window import EnigmaConfigWindow
 from copy import copy
 from functools import partial
 
@@ -49,16 +50,26 @@ class EnigmaWindow(QWidget):
         self.keyboard = {}
         self.lamps = {}
         self.initUI()
+
     
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
     
-        # Create widget
+        # Create background
         label = QLabel(self)
         pixmap = QPixmap('images/enigma.png')
         label.setPixmap(pixmap)
         self.resize(pixmap.width(),pixmap.height())
+
+        # Create settings knob
+        knob = QPushButton(self)
+        knob.setGeometry(551,63,64,64)
+        knob.setFixedSize(64,64)
+        knob.setFlat(True)
+        knob.setStyleSheet("border: 0px; border-radius:32;")
+        knob.clicked.connect(self.open_settings)
+
         button_spacing = 23+52
         top_row = ['Q','W','E','R','T','Z','U','I','O']
         middle_row = ['A','S','D','F','G','H','J','K']
@@ -70,8 +81,6 @@ class EnigmaWindow(QWidget):
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
             button.released.connect(partial(self.key_released, letter))
-            # button.pressed.connect(lambda: self.key_pressed(copy(letter)))
-            # button.released.connect(lambda: self.key_released(copy(letter)))
         middle_row_spacing = 22+52
         for offset, letter in enumerate(middle_row):
             lamp = Lamp(115+offset*middle_row_spacing,477,letter,self)
@@ -80,8 +89,6 @@ class EnigmaWindow(QWidget):
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
             button.released.connect(partial(self.key_released, letter))
-            # button.pressed.connect(lambda: self.key_pressed(copy(letter)))
-            # button.released.connect(lambda: self.key_released(copy(letter)))
 
         for offset, letter in enumerate(bottom_row):
             lamp = Lamp(80+offset*button_spacing,551,letter,self)
@@ -90,10 +97,14 @@ class EnigmaWindow(QWidget):
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
             button.released.connect(partial(self.key_released, letter))
-            # button.pressed.connect(lambda: self.key_pressed(copy(letter)))
-            # button.released.connect(lambda: self.key_released(copy(letter)))
 
         self.show()
+
+    def open_settings(self):
+        settings_dialog = EnigmaConfigWindow()
+        if settings_dialog.exec():
+            # Replace our enigma machine with a new one
+            self.enigma = EnigmaMachine(**settings_dialog.enigma_settings())
 
     def key_pressed(self, letter: str):
         self.keyboard[letter].darken()

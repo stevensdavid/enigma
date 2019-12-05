@@ -126,32 +126,32 @@ class Ui_EnigmaSettings(object):
         _translate = QtCore.QCoreApplication.translate
         EnigmaSettings.setWindowTitle(_translate("EnigmaSettings", "Enigma Settings"))
         self.left_rotor_label.setText(_translate("EnigmaSettings", "Left rotor"))
-        self.left_rotor_combo.setItemText(0, _translate("EnigmaSettings", "I"))
-        self.left_rotor_combo.setItemText(1, _translate("EnigmaSettings", "II"))
-        self.left_rotor_combo.setItemText(2, _translate("EnigmaSettings", "III"))
-        self.left_rotor_combo.setItemText(3, _translate("EnigmaSettings", "IV"))
-        self.left_rotor_combo.setItemText(4, _translate("EnigmaSettings", "V"))
-        self.left_rotor_combo.setItemText(5, _translate("EnigmaSettings", "VI"))
-        self.left_rotor_combo.setItemText(6, _translate("EnigmaSettings", "VII"))
-        self.left_rotor_combo.setItemText(7, _translate("EnigmaSettings", "VIII"))
+        self.left_rotor_combo.setItemText(0, _translate("EnigmaSettings", "1"))
+        self.left_rotor_combo.setItemText(1, _translate("EnigmaSettings", "2"))
+        self.left_rotor_combo.setItemText(2, _translate("EnigmaSettings", "3"))
+        self.left_rotor_combo.setItemText(3, _translate("EnigmaSettings", "4"))
+        self.left_rotor_combo.setItemText(4, _translate("EnigmaSettings", "5"))
+        self.left_rotor_combo.setItemText(5, _translate("EnigmaSettings", "6"))
+        self.left_rotor_combo.setItemText(6, _translate("EnigmaSettings", "7"))
+        self.left_rotor_combo.setItemText(7, _translate("EnigmaSettings", "8"))
         self.middle_rotor_label.setText(_translate("EnigmaSettings", "Middle rotor"))
-        self.middle_rotor_combo.setItemText(0, _translate("EnigmaSettings", "I"))
-        self.middle_rotor_combo.setItemText(1, _translate("EnigmaSettings", "II"))
-        self.middle_rotor_combo.setItemText(2, _translate("EnigmaSettings", "III"))
-        self.middle_rotor_combo.setItemText(3, _translate("EnigmaSettings", "IV"))
-        self.middle_rotor_combo.setItemText(4, _translate("EnigmaSettings", "V"))
-        self.middle_rotor_combo.setItemText(5, _translate("EnigmaSettings", "VI"))
-        self.middle_rotor_combo.setItemText(6, _translate("EnigmaSettings", "VII"))
-        self.middle_rotor_combo.setItemText(7, _translate("EnigmaSettings", "VIII"))
+        self.middle_rotor_combo.setItemText(0, _translate("EnigmaSettings", "1"))
+        self.middle_rotor_combo.setItemText(1, _translate("EnigmaSettings", "2"))
+        self.middle_rotor_combo.setItemText(2, _translate("EnigmaSettings", "3"))
+        self.middle_rotor_combo.setItemText(3, _translate("EnigmaSettings", "4"))
+        self.middle_rotor_combo.setItemText(4, _translate("EnigmaSettings", "5"))
+        self.middle_rotor_combo.setItemText(5, _translate("EnigmaSettings", "6"))
+        self.middle_rotor_combo.setItemText(6, _translate("EnigmaSettings", "7"))
+        self.middle_rotor_combo.setItemText(7, _translate("EnigmaSettings", "8"))
         self.right_rotor_label.setText(_translate("EnigmaSettings", "Right rotor"))
-        self.right_rotor_combo.setItemText(0, _translate("EnigmaSettings", "I"))
-        self.right_rotor_combo.setItemText(1, _translate("EnigmaSettings", "II"))
-        self.right_rotor_combo.setItemText(2, _translate("EnigmaSettings", "III"))
-        self.right_rotor_combo.setItemText(3, _translate("EnigmaSettings", "IV"))
-        self.right_rotor_combo.setItemText(4, _translate("EnigmaSettings", "V"))
-        self.right_rotor_combo.setItemText(5, _translate("EnigmaSettings", "VI"))
-        self.right_rotor_combo.setItemText(6, _translate("EnigmaSettings", "VII"))
-        self.right_rotor_combo.setItemText(7, _translate("EnigmaSettings", "VIII"))
+        self.right_rotor_combo.setItemText(0, _translate("EnigmaSettings", "1"))
+        self.right_rotor_combo.setItemText(1, _translate("EnigmaSettings", "2"))
+        self.right_rotor_combo.setItemText(2, _translate("EnigmaSettings", "3"))
+        self.right_rotor_combo.setItemText(3, _translate("EnigmaSettings", "4"))
+        self.right_rotor_combo.setItemText(4, _translate("EnigmaSettings", "5"))
+        self.right_rotor_combo.setItemText(5, _translate("EnigmaSettings", "6"))
+        self.right_rotor_combo.setItemText(6, _translate("EnigmaSettings", "7"))
+        self.right_rotor_combo.setItemText(7, _translate("EnigmaSettings", "8"))
         self.ring_position_label.setText(_translate("EnigmaSettings", "Ring positions"))
         self.refl_label.setText(_translate("EnigmaSettings", "Reflector"))
         self.refl_combo.setItemText(0, _translate("EnigmaSettings", "B"))
@@ -163,3 +163,21 @@ class EnigmaConfigWindow(Ui_EnigmaSettings, QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(EnigmaConfigWindow, self).__init__(parent)
         self.setupUi(self)
+
+    def enigma_settings(self):
+        kwargs = {}
+        kwargs["rotors"] = [int(x) for x in 
+            (self.left_rotor_combo.currentText(), 
+            self.middle_rotor_combo.currentText(), 
+            self.right_rotor_combo.currentText())
+        ]
+        kwargs["ringstellung"] = [
+            self.left_position_spinbox.value(),
+            self.middle_position_spinbox.value(),
+            self.right_position_spinbox.value()
+        ]
+        kwargs['pb_map'] = {
+            x[0]:x[1] for x in self.pb_input.text().split(' ')
+        }
+        kwargs["reflector"] = self.refl_combo.currentText()
+        return kwargs
