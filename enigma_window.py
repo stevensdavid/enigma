@@ -26,7 +26,7 @@ class KeyboardPushButton(QPushButton):
 class Lamp(QLabel):
     def __init__(self, x:int, y:int, letter:str, parent=None):
         super().__init__(parent=parent)
-        self.setGeometry(x,y,52,52)
+        self.setGeometry(x,y,52,53)
         icon = QPixmap(f'images/letters/{letter}.png')
         self.setPixmap(icon)
         self.disable()
@@ -82,29 +82,30 @@ class EnigmaWindow(QWidget):
             self.visible_settings[pos] = label
 
         # Create lamps and keyboard
-        button_spacing = 23+52
+        button_spacing = 22 + 52
         top_row = ['Q','W','E','R','T','Z','U','I','O']
         middle_row = ['A','S','D','F','G','H','J','K']
-        bottom_row = ['P','Y','X','C','V','B','N','M','L']
+        bottom_row = ['P','Y','X','C','V','B','N','M','L']            
+
         for offset, letter in enumerate(top_row):
-            lamp = Lamp(80+offset*button_spacing,406,letter,self)
-            button = KeyboardPushButton(79+offset*button_spacing,659,self)
+            lamp = Lamp(80+offset*button_spacing, 410, letter, self)
+            button = KeyboardPushButton(80+offset*button_spacing,659,self)
             self.lamps[letter] = lamp
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
             button.released.connect(partial(self.key_released, letter))
-        middle_row_spacing = 22+52
+
         for offset, letter in enumerate(middle_row):
-            lamp = Lamp(115+offset*middle_row_spacing,477,letter,self)
-            button = KeyboardPushButton(114+offset*middle_row_spacing,730,self)
+            lamp = Lamp(117+offset*button_spacing,481,letter,self)
+            button = KeyboardPushButton(117+offset*button_spacing,730,self)
             self.lamps[letter] = lamp
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
             button.released.connect(partial(self.key_released, letter))
 
         for offset, letter in enumerate(bottom_row):
-            lamp = Lamp(80+offset*button_spacing,551,letter,self)
-            button = KeyboardPushButton(79+offset*button_spacing,804,self)
+            lamp = Lamp(80+offset*button_spacing,552,letter,self)
+            button = KeyboardPushButton(80+offset*button_spacing,799,self)
             self.lamps[letter] = lamp
             self.keyboard[letter] = button
             button.pressed.connect(partial(self.key_pressed, letter))
