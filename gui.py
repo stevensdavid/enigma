@@ -6,13 +6,6 @@ from enigma_window import EnigmaWindow
 from enigma_config_window import EnigmaConfigWindow
 import sys
 
-def letter_pressed(letter: str):
-    pass
-
-
-def letter_released(letter: str):
-    pass
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
