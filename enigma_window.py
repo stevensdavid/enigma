@@ -41,6 +41,13 @@ class Lamp(QLabel):
 class EnigmaWindow(QWidget):
     def __init__(self, **kwargs):
         super().__init__()
+        if not kwargs:
+            kwargs = {
+                "pb_map": {},
+                "reflector": 'B',
+                "rotors": [1,2,3],
+                "ringstellung": [1,1,1]
+            }
         self.enigma = EnigmaMachine(**kwargs)
         self.title = 'Enigma'
         self.left = 10
