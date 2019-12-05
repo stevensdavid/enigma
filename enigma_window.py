@@ -80,6 +80,13 @@ class EnigmaWindow(QWidget):
             label.setStyleSheet('color: white;font: 40px arial')
             label.setAlignment(Qt.AlignCenter)
             self.visible_settings[pos] = label
+            # Create rotor to increment values with
+            button = QPushButton(self)
+            button.setGeometry(188+87*idx, 174, 20, 153)
+            button.setFlat(True)
+            button.setStyleSheet("border: 0px")
+            button.clicked.connect(partial(self.increment_rotor, pos))
+
 
         # Create lamps and keyboard
         button_spacing = 22 + 52
@@ -112,6 +119,10 @@ class EnigmaWindow(QWidget):
             button.released.connect(partial(self.key_released, letter))
 
         self.show()
+
+    def increment_rotor(self, rotor: str):
+        self.enigma.increment_rotor(rotor)
+        self.update_shown_rotor_positions()
 
     def update_shown_rotor_positions(self):
         settings = self.enigma.rotor_positions()
