@@ -177,7 +177,9 @@ class EnigmaConfigWindow(Ui_EnigmaSettings, QtWidgets.QDialog):
             self.right_position_spinbox.value()
         ]
         kwargs['pb_map'] = {
-            x[0]:x[1] for x in self.pb_input.text().split(' ')
+            x[0]:x[1] 
+            for x in self.pb_input.text().split(' ') 
+            if self.pb_input.text()
         }
         kwargs["reflector"] = self.refl_combo.currentText()
         return kwargs
