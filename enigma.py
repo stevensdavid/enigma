@@ -10,31 +10,32 @@ class RotorGroup:
 
     def transform(self, letter: str, forward: bool = True) -> str:
         if forward:
-            self.increment_first()
-            for rotor in self.rotors:
+            self.increment_right()
+            for rotor in reversed(self.rotors):
+                # Forward transformation is applied from right to left
                 letter = rotor.transform(letter, forward)
             return letter
         else:
-            for rotor in reversed(self.rotors):
+            for rotor in self.rotors:
                 letter = rotor.transform(letter, forward)
             return letter
 
-    def increment_first(self):
-        r1, r2, _ = self.rotors
-        if (r1.step in r1.turnover_points 
-            or r2.step in r2.turnover_points):
+    def increment_right(self):
+        _, middle, right = self.rotors
+        if (right.step in right.turnover_points 
+            or middle.step in middle.turnover_points):
             # second clause is double step
-            self.increment_second()
-        r1.increment()
+            self.increment_middle()
+        right.increment()
 
-    def increment_second(self):
-        r2 = self.rotors[1]
-        if r2.step in r2.turnover_points:
-            self.increment_third()
-        r2.increment()
+    def increment_middle(self):
+        middle = self.rotors[1]
+        if middle.step in middle.turnover_points:
+            self.increment_left()
+        middle.increment()
 
-    def increment_third(self):
-        self.rotors[2].increment()
+    def increment_left(self):
+        self.rotors[0].increment()
 
     def choose_rotors(self, rotors: List[int], 
                       ringstellung: List[int] = None) -> None:
@@ -42,12 +43,24 @@ class RotorGroup:
             ringstellung = [0, 0, 0]
         return [Rotor(r, s) for r, s in zip(rotors, ringstellung)]
 
-    def increment_rotor(self, rotor: int) -> str:
-        self.rotors[rotor].increment()
-        return self.rotors[rotor].step
+    def increment_rotor(self, rotor: str) -> str:
+        if rotor == 'right':
+            r = self.rotors[2]
+        elif rotor == 'middle':
+            r = self.rotors[1]
+        elif rotor == 'left':
+            r = self.rotors[0]
+        r.increment()
+        return r.step
 
-    def rotor_position(self, rotor: int) -> str:
-        return self.rotors[rotor].step
+    def rotor_position(self, rotor: str) -> str:
+        if rotor == 'left':
+            idx = 0
+        elif rotor == 'middle':
+            idx = 1
+        elif rotor == 'right':
+            idx = 2
+        return self.rotors[idx].step
 
     def rotor_positions(self) -> List[str]:
         return list(map(lambda x: x.step, self.rotors))
@@ -59,7 +72,8 @@ class Rotor:
         self.turnover_points = []
         self.step = 'A'
         self.type = number
-        self.ringstellung = ringstellung
+        # change ringstellung to zero-indexed
+        self.ringstellung = ringstellung - 1
 
         self.change_rotor(number, ringstellung)
 
@@ -156,18 +170,18 @@ class EnigmaMachine:
         The famous Operation Barbarossa message's first part:
         >>> plugboard_map = { 'A': 'V', 'B': 'S', 'C': 'G', 'D': 'L', 
         ... 'F': 'U', 'H': 'Z', 'I': 'N', 'K': 'M', 'O': 'W', 'R': 'X' }
-        >>> rotors = [5, 4, 2]
-        >>> ringstellung = [11, 20, 1]
+        >>> rotors = [2, 4, 5]
+        >>> ringstellung = [2, 21, 12]
         >>> enigma = EnigmaMachine(pb_map=plugboard_map, reflector='B', 
         ... rotors=rotors, ringstellung=ringstellung)
-        >>> while enigma.rotor_position(0) != 'A':
-        ...     _ = enigma.increment_rotor(0)
+        >>> while enigma.rotor_position('right') != 'A':
+        ...     _ = enigma.increment_rotor('right')
         ...
-        >>> while enigma.rotor_position(1) != 'L':
-        ...     _ = enigma.increment_rotor(1)
+        >>> while enigma.rotor_position('middle') != 'L':
+        ...     _ = enigma.increment_rotor('middle')
         ...
-        >>> while enigma.rotor_position(2) != 'B':
-        ...     _ = enigma.increment_rotor(2)
+        >>> while enigma.rotor_position('left') != 'B':
+        ...     _ = enigma.increment_rotor('left')
         ...
         >>> from copy import copy
         >>> e = copy(enigma)
@@ -211,21 +225,21 @@ KAYUPADTXQSPINQMATLPIFSVKDASCTACDPBOPVHJK'
     def set_plugboard(self, mapping: Dict[str, str]) -> None:
         self.plugboard.set_mapping(mapping)
 
-    def increment_rotor(self, rotor: int) -> str:
+    def increment_rotor(self, rotor: str) -> str:
         return self.rotor_group.increment_rotor(rotor)
 
-    def rotor_position(self, rotor: int) -> str:
+    def rotor_position(self, rotor: str) -> str:
         return self.rotor_group.rotor_position(rotor)
 
     def __copy__(self):
         other = EnigmaMachine(self._pb_map, self._reflector,
                               self._rotors, self._ringstellung)
-        while other.rotor_position(0) != self.rotor_position(0):
-            other.increment_rotor(0)
-        while other.rotor_position(1) != self.rotor_position(1):
-            other.increment_rotor(1)
-        while other.rotor_position(2) != self.rotor_position(2):
-            other.increment_rotor(2)
+        while other.rotor_position('right') != self.rotor_position('right'):
+            other.increment_rotor('right')
+        while other.rotor_position('middle') != self.rotor_position('middle'):
+            other.increment_rotor('middle')
+        while other.rotor_position('left') != self.rotor_position('left'):
+            other.increment_rotor('left')
         return other
 
 
