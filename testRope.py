@@ -7,6 +7,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QCursor
 import sys
 import random
+import math
 
 class Rope():
 
@@ -31,6 +32,15 @@ class Rope():
             self.anchor2 = point
 
     def isClose(self, point):
+        if (self.anchor1 != None):
+            distToAnchor1 = math.sqrt(math.pow(self.anchor1.x() - point.x(), 2) + math.pow(self.anchor1.y() - point.y(), 2))
+            if (distToAnchor1 <= 10):
+                return self.anchor1, 1
+
+        if (self.anchor2 != None):
+            distToAnchor2 = math.sqrt(math.pow(self.anchor2.x() - point.x(), 2) + math.pow(self.anchor2.y() - point.y(), 2))
+            if (distToAnchor2 <= 10):
+                return self.anchor2, 2
         return None, None
 
     def removeAnchor(self, anchor):
@@ -80,20 +90,26 @@ class Window(QMainWindow):
                 painter.drawEllipse(rope.anchor2.x(), rope.anchor2.y(), 5, 5)
             if (rope.anchor1 != None and rope.anchor2 != None):
                 painter.drawLine(rope.anchor1, rope.anchor2)
-            #if (self.carryingAnchor):
-            #    pos = self.mousePos()
-            #    painter.drawEllipse(pos.x(), pos.y(), 5, 5)
-            #    if (self.carryingAnchorId == 2):
-            #        painter.drawLine(pos, self.ropes[0])
+            if (self.carryingAnchor):
+                pos = self.mousePos()
+                if (pos != None):
+                    painter.drawEllipse(pos.x(), pos.y(), 5, 5)
+                    if (self.carryingAnchorId == 2):
+                        painter.drawLine(pos, self.ropes[self.carryingRopeId].anchor1)
+                    elif (self.carryingAnchorId == 1):
+                        painter.drawLine(pos, self.ropes[self.carryingRopeId].anchor2)
 
     def mousePressEvent(self, QMouseEvent):
         pos = self.mousePos()
         ropeAnchor, id = None, None
+        i = None
         for i in range(0, len(self.ropes)):
             ropeAnchor, id = self.ropes[i].isClose(pos)
+            if (ropeAnchor != None):
+                break
         # re-place anchor point
         if (self.carryingAnchor):
-            self.rope.setAnchor(pos, anchor=self.carryingAnchorId)
+            self.ropes[self.carryingRopeId].setAnchor(pos, anchor=self.carryingAnchorId)
             self.carryingAnchor = False
             self.carryingAnchorId = -1
         else:
@@ -110,10 +126,10 @@ class Window(QMainWindow):
                 self.ropes.append(rope)
             # start moving anchor point
             else:
-                #self.carryingRopeId = i
+                self.carryingRopeId = i
                 self.carryingAnchor = True
                 self.carryingAnchorId = id
-                self.rope.removeAnchor(id)
+                self.ropes[i].removeAnchor(id)
 
     def mousePos(self):
         this = self
