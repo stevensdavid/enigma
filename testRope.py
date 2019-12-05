@@ -13,7 +13,6 @@ class Rope():
     def __init__(self, window):
         self.window = window
         self.number_nodes = 10
-        self.cursor = QCursor()
         self.anchor1 = None
         self.anchor2 = None
         self.nodes = []
@@ -22,22 +21,31 @@ class Rope():
             self.nodes.append(QPoint(i*10, i*10))
     
     def update(self):
-        cursor = self.mousePos()
+        #cursor = self.window.mousePos()
+        pass
 
-    def mousePos(self):
-        pos = self.window.mapFromGlobal(self.cursor.pos())
-        if (pos.x() <= 500 and
-            pos.x() >= 0 and
-            pos.y() <= 500 and
-            pos.y() >= 0):
-            return pos
-        return None
-
-    def setAnchor(self, anchor=1):
+    def setAnchor(self, point, anchor=1):
         if (anchor == 1):
-            self.anchor1 = self.mousePos()
+            self.anchor1 = point
         else:
-            self.anchor2 = self.mousePos()
+            self.anchor2 = point
+
+    def isClose(self, point):
+        return None, None
+
+    def removeAnchor(self, anchor):
+        if (anchor == 1):
+            self.anchor1 = None
+        else:
+            self.anchor2 = None
+    
+    def __repr__(self):
+        string = "["
+        if (self.anchor1 != None):
+            string += "a1: ({0},{1})".format(self.anchor1.x(), self.anchor1.y())
+        if (self.anchor2 != None):
+            string += "\ta2: ({0},{1})".format(self.anchor2.x(), self.anchor2.y())
+        return string + "]"
 
 class Window(QMainWindow):
     def __init__(self):
@@ -56,31 +64,69 @@ class Window(QMainWindow):
         self.show()
 
     def initRope(self):
-        self.rope = Rope(self)
+        self.ropes = [] 
+        self.cursor = QCursor()
+        self.carryingAnchor = False
+        self.placingAnchor = False
 
     def paintEvent(self, event):
-        self.rope.update()
         painter = QPainter(self)
-        nodes = self.rope.nodes
-        #for i in range(0, len(nodes)):
-        #    node = nodes[i]
-        #    painter.drawEllipse(node.x(), node.y(), 5, 5)
-        if (self.rope.anchor1 != None):
-            painter.drawEllipse(self.rope.anchor1.x(), self.rope.anchor1.y(), 5, 5)
-        if (self.rope.anchor2 != None):
-            painter.drawEllipse(self.rope.anchor2.x(), self.rope.anchor2.y(), 5, 5)
-        if (self.rope.anchor1 != None and self.rope.anchor2 != None):
-            painter.drawLine(self.rope.anchor1, self.rope.anchor2)
+        for i in range(0, len(self.ropes)):
+            rope = self.ropes[i]
+            rope.update()
+            if (rope.anchor1 != None):
+                painter.drawEllipse(rope.anchor1.x(), rope.anchor1.y(), 5, 5)
+            if (rope.anchor2 != None):
+                painter.drawEllipse(rope.anchor2.x(), rope.anchor2.y(), 5, 5)
+            if (rope.anchor1 != None and rope.anchor2 != None):
+                painter.drawLine(rope.anchor1, rope.anchor2)
+            #if (self.carryingAnchor):
+            #    pos = self.mousePos()
+            #    painter.drawEllipse(pos.x(), pos.y(), 5, 5)
+            #    if (self.carryingAnchorId == 2):
+            #        painter.drawLine(pos, self.ropes[0])
 
     def mousePressEvent(self, QMouseEvent):
-        if (self.rope.anchor1 == None):
-            self.rope.setAnchor(1)
+        pos = self.mousePos()
+        ropeAnchor, id = None, None
+        for i in range(0, len(self.ropes)):
+            ropeAnchor, id = self.ropes[i].isClose(pos)
+        # re-place anchor point
+        if (self.carryingAnchor):
+            self.rope.setAnchor(pos, anchor=self.carryingAnchorId)
+            self.carryingAnchor = False
+            self.carryingAnchorId = -1
         else:
-            self.rope.setAnchor(2)
+            # place second anchor
+            if(self.placingAnchor == True):
+                self.placingAnchor = False
+                self.ropes[self.placingAnchorId].setAnchor(pos, 2)
+            # new rope
+            elif (ropeAnchor == None):
+                self.placingAnchor = True
+                self.placingAnchorId = len(self.ropes)
+                rope = Rope(self)
+                rope.setAnchor(pos, 1)
+                self.ropes.append(rope)
+            # start moving anchor point
+            else:
+                #self.carryingRopeId = i
+                self.carryingAnchor = True
+                self.carryingAnchorId = id
+                self.rope.removeAnchor(id)
+
+    def mousePos(self):
+        this = self
+        pos = this.mapFromGlobal(self.cursor.pos())
+        if (pos.x() <= 500 and
+            pos.x() >= 0 and
+            pos.y() <= 500 and
+            pos.y() >= 0):
+            return pos
+        return None
 
 if __name__ == "__main__":
     App = QApplication(sys.argv)
-    print(App.screens()[0])
     window = Window() 
     timer = QTimer(window)
     timer.timeout.connect(window.update)
