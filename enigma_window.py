@@ -125,10 +125,12 @@ class EnigmaWindow(QWidget):
         if settings_dialog.exec():
             # Replace our enigma machine with a new one
             self.enigma = EnigmaMachine(**settings_dialog.enigma_settings())
+            self.update_shown_rotor_positions()
 
     def key_pressed(self, letter: str):
         self.keyboard[letter].darken()
         self.result = self.enigma.encrypt(letter)
+        self.update_shown_rotor_positions()
         self.lamps[self.result].enable()
 
     def key_released(self, letter: str):
