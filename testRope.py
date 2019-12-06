@@ -5,49 +5,63 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QPoint
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QCursor
+from PyQt5.QtGui import QColor
 import sys
 import random
 import math
 
-class Rope():
+class Node():
+    def __init__(self, x, y):
+        self.position = QPoint(x,y)
+        self.speed = [0,0]
+        self.velocity = [0,0]
+        self.acceleration = [0,0]
 
+    def update(self):
+        # x & y velocity
+        self.velocity[0] += self.acceleration[0] * (1/30)
+        self.velocity[1] += self.acceleration[1] * (1/30)
+        self.position.setX(self.position.x() - self.velocity[0] * (1/30)) 
+        self.position.setY(self.position.y() - self.velocity[1] * (1/30))
+
+        # gravity
+        self.applyForce([0,-9.82])
+    
+    def applyForce(self, vector):
+        self.acceleration[0] += vector[0]
+        self.acceleration[1] += vector[1]
+
+class Rope():
     def __init__(self, window):
         self.window = window
         self.number_nodes = 10
-        self.anchor1 = None
-        self.anchor2 = None
+        self.anchors = [None, None]
         self.nodes = []
-
-        for i in range(0, self.number_nodes):
-            self.nodes.append(QPoint(i*10, i*10))
     
     def update(self):
         #cursor = self.window.mousePos()
-        pass
+        for node in self.nodes:
+            node.update()
 
-    def setAnchor(self, point, anchor=1):
-        if (anchor == 1):
-            self.anchor1 = point
+    def setAnchor(self, point, anchor=0):
+        if (anchor == 0):
+            self.anchors[0] = point
         else:
-            self.anchor2 = point
+            self.anchors[1] = point
+            for i in range(0, self.number_nodes):
+                # TODO
+                self.nodes.append(Node(i*10, i*10))
 
     def isClose(self, point):
-        if (self.anchor1 != None):
-            distToAnchor1 = math.sqrt(math.pow(self.anchor1.x() - point.x(), 2) + math.pow(self.anchor1.y() - point.y(), 2))
-            if (distToAnchor1 <= 10):
-                return self.anchor1, 1
-
-        if (self.anchor2 != None):
-            distToAnchor2 = math.sqrt(math.pow(self.anchor2.x() - point.x(), 2) + math.pow(self.anchor2.y() - point.y(), 2))
-            if (distToAnchor2 <= 10):
-                return self.anchor2, 2
+        # todo: clean-up, replace with anchors list
+        id = 0
+        for anchor in self.anchors:
+            if (anchor != None):
+                distToAnchor = math.sqrt(math.pow(anchor.x() - point.x(), 2) + math.pow(anchor.y() - point.y(), 2))
+                if (distToAnchor <= 10):
+                    return anchor, id
+            id += 1
         return None, None
-
-    def removeAnchor(self, anchor):
-        if (anchor == 1):
-            self.anchor1 = None
-        else:
-            self.anchor2 = None
     
     def __repr__(self):
         string = "["
@@ -84,20 +98,30 @@ class Window(QMainWindow):
         for i in range(0, len(self.ropes)):
             rope = self.ropes[i]
             rope.update()
-            if (rope.anchor1 != None):
-                painter.drawEllipse(rope.anchor1.x(), rope.anchor1.y(), 5, 5)
-            if (rope.anchor2 != None):
-                painter.drawEllipse(rope.anchor2.x(), rope.anchor2.y(), 5, 5)
-            if (rope.anchor1 != None and rope.anchor2 != None):
-                painter.drawLine(rope.anchor1, rope.anchor2)
-            if (self.carryingAnchor):
-                pos = self.mousePos()
-                if (pos != None):
-                    painter.drawEllipse(pos.x(), pos.y(), 5, 5)
-                    if (self.carryingAnchorId == 2):
-                        painter.drawLine(pos, self.ropes[self.carryingRopeId].anchor1)
-                    elif (self.carryingAnchorId == 1):
-                        painter.drawLine(pos, self.ropes[self.carryingRopeId].anchor2)
+            # debug 
+            painter.setPen(QPen(Qt.black, 1))
+            for node in rope.nodes:
+                painter.drawEllipse(node.position.x(), node.position.y(), 5, 5)
+
+            painter.setPen(QPen(QColor(76, 18, 0), 10))
+            hasBothAnchors = True
+            for anchor in rope.anchors:
+                if (anchor != None):
+                    painter.drawEllipse(anchor.x(), anchor.y(), 5, 5)
+                else:
+                    hasBothAnchors = False
+            if (hasBothAnchors):
+                painter.drawLine(rope.anchors[0], rope.anchors[1])
+        if (self.carryingAnchor):
+            pos = self.mousePos()
+            if (pos != None):
+                    rope = self.ropes[self.carryingRopeId]
+                    rope.anchors[self.carryingAnchorId] = pos
+                #painter.drawEllipse(pos.x(), pos.y(), 5, 5)
+                #if (self.carryingAnchorId == 2):
+                #    painter.drawLine(pos, self.ropes[self.carryingRopeId].anchors[0])
+                #elif (self.carryingAnchorId == 1):
+                #    painter.drawLine(pos, self.ropes[self.carryingRopeId].anchors[1])
 
     def mousePressEvent(self, QMouseEvent):
         pos = self.mousePos()
@@ -109,27 +133,27 @@ class Window(QMainWindow):
                 break
         # re-place anchor point
         if (self.carryingAnchor):
-            self.ropes[self.carryingRopeId].setAnchor(pos, anchor=self.carryingAnchorId)
+            #self.ropes[self.carryingRopeId].setAnchor(pos, anchor=self.carryingAnchorId)
             self.carryingAnchor = False
             self.carryingAnchorId = -1
         else:
             # place second anchor
             if(self.placingAnchor == True):
                 self.placingAnchor = False
-                self.ropes[self.placingAnchorId].setAnchor(pos, 2)
+                self.ropes[self.placingAnchorId].setAnchor(pos, 1)
             # new rope
             elif (ropeAnchor == None):
                 self.placingAnchor = True
                 self.placingAnchorId = len(self.ropes)
                 rope = Rope(self)
-                rope.setAnchor(pos, 1)
+                rope.setAnchor(pos, 0)
                 self.ropes.append(rope)
             # start moving anchor point
             else:
                 self.carryingRopeId = i
                 self.carryingAnchor = True
                 self.carryingAnchorId = id
-                self.ropes[i].removeAnchor(id)
+                #self.ropes[i].removeAnchor(id)
 
     def mousePos(self):
         this = self
