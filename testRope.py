@@ -9,23 +9,25 @@ from PyQt5.QtGui import QColor
 import sys
 import random
 import math
+import numpy as np
 
 class Node():
     def __init__(self, x, y):
-        self.position = QPoint(x,y)
-        self.speed = [0,0]
-        self.velocity = [0,0]
-        self.acceleration = [0,0]
+        self.position = np.array([x,y])
+        self.speed = np.array([0,0])
+        self.velocity = np.array([0,0])
+        self.acceleration = np.array([0,0])
 
     def update(self):
         # x & y velocity
         self.velocity[0] += self.acceleration[0] * (1/30)
         self.velocity[1] += self.acceleration[1] * (1/30)
-        self.position.setX(self.position.x() - self.velocity[0] * (1/30)) 
-        self.position.setY(self.position.y() - self.velocity[1] * (1/30))
+        # negative because canvas coordinates inverted
+        self.position[0] += self.velocity[0] * (1/30)
+        self.position[1] += self.velocity[1] * (1/30)
 
         # gravity
-        self.applyForce([0,-9.82])
+        self.applyForce([0,9.82])
     
     def applyForce(self, vector):
         self.acceleration[0] += vector[0]
@@ -40,8 +42,56 @@ class Rope():
     
     def update(self):
         #cursor = self.window.mousePos()
-        for node in self.nodes:
+        """
+        force = -k * (x - d)
+        k: a constant to represent the stiffness of the spring
+        x: distance of the mass from the point it is bound to
+        d: a constant positive distance value that a spring stays steady
+        """
+        self.springConstant = 1
+        self.springLength = 5
+        self.frictionConstant = 1
+
+        for i in range(0, len(self.nodes)):
+            node = self.nodes[i]
+            if (i == 0):
+                npAnchor = np.array([self.anchors[0].x(), self.anchors[0].y()])
+                springVector = npAnchor - node.position 
+                length = np.linalg.norm(springVector)
+                if (length > 0):
+                    f = (springVector / length) * (length - self.springLength) * self.springConstant
+                    # force += -(mass1->vel - mass2->vel) * frictionConstant;
+                    f += -(node.velocity) * self.frictionConstant
+                    node.applyForce(f)
+            elif (i == len(self.nodes)-1):
+                npAnchor = np.array([self.anchors[1].x(), self.anchors[1].y()])
+                springVector = npAnchor - node.position 
+                length = np.linalg.norm(springVector)
+                if (length > 0):
+                    f = (springVector / length) * (length - self.springLength) * self.springConstant
+                    f += -(node.velocity) * self.frictionConstant
+                    node.applyForce(f)
+            else:
+                prevNode = self.nodes[i-1]
+                nextNode = self.nodes[i+1] 
+                f = self.springForce(node, prevNode)
+                node.applyForce(f)
+                prevNode.applyForce(-f)
+
+                f = self.springForce(node, nextNode)
+                node.applyForce(f)
+                nextNode.applyForce(-f)
+
             node.update()
+
+    def springForce(self, node1, node2):
+        springVector = node2.position - node1.position 
+        length = np.linalg.norm(springVector)
+        if (length > 0):
+            f = (springVector / length) * (length - self.springLength) * self.springConstant
+            f += -(node1.velocity - node2.velocity) * self.frictionConstant
+            return f
+        return [0,0]
 
     def setAnchor(self, point, anchor=0):
         if (anchor == 0):
@@ -119,9 +169,9 @@ class Window(QMainWindow):
             # debug 
             painter.setPen(QPen(Qt.black, 1))
             for node in rope.nodes:
-                painter.drawEllipse(node.position.x(), node.position.y(), 5, 5)
+                painter.drawEllipse(node.position[0], node.position[1], 5, 5)
 
-            painter.setPen(QPen(QColor(76, 18, 0), 10))
+            #painter.setPen(QPen(QColor(76, 18, 0), 10))
             hasBothAnchors = True
             for anchor in rope.anchors:
                 if (anchor != None):
@@ -129,7 +179,14 @@ class Window(QMainWindow):
                 else:
                     hasBothAnchors = False
             if (hasBothAnchors):
-                painter.drawLine(rope.anchors[0], rope.anchors[1])
+                q = QPoint(rope.nodes[0].position[0], rope.nodes[0].position[1])
+                painter.drawLine(rope.anchors[0], q)
+                q = QPoint(rope.nodes[len(rope.nodes)-1].position[0], rope.nodes[len(rope.nodes)-1].position[1])
+                painter.drawLine(rope.anchors[1], q)
+                for i in range(1,len(rope.nodes)):
+                    q1 = QPoint(rope.nodes[i].position[0], rope.nodes[i].position[1])
+                    q2 = QPoint(rope.nodes[i-1].position[0], rope.nodes[i-1].position[1])
+                    painter.drawLine(q1, q2)
         if (self.carryingAnchor):
             pos = self.mousePos()
             if (pos != None):
