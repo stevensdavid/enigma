@@ -50,13 +50,13 @@ class Rope():
             self.anchors[1] = point
 
             # place rope nodes
-            distance = self.dist(self.anchors[0], self.anchors[1])
+            x_distance = abs(self.anchors[0].x() - self.anchors[1].x())
             # slope between anchors
             dx = (self.anchors[1].x() - self.anchors[0].x())
             if (dx == 0):
                 dx = 1
             m = (self.anchors[1].y() - self.anchors[0].y()) / dx
-            step = distance / (self.number_nodes + 2)
+            step = x_distance / (self.number_nodes + 2)
             #self.number_nodes = int(distance / 10)
             for i in range(0, self.number_nodes):
                 if (self.anchors[1].x() >= self.anchors[0].x()):
@@ -80,7 +80,7 @@ class Rope():
         return None, None
 
     def dist(self, point1, point2):
-        return math.sqrt(math.pow(point1.x() - point2.x(), 2) + math.pow(point1.y() - point2.y(), 2))
+        return math.sqrt(math.pow(point2.x() - point1.x(), 2) + math.pow(point2.y() - point1.y(), 2))
     
     def __repr__(self):
         string = "["
