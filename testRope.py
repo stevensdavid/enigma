@@ -48,27 +48,45 @@ class Rope():
             self.anchors[0] = point
         else:
             self.anchors[1] = point
+
+            # place rope nodes
+            distance = self.dist(self.anchors[0], self.anchors[1])
+            # slope between anchors
+            dx = (self.anchors[1].x() - self.anchors[0].x())
+            if (dx == 0):
+                dx = 1
+            m = (self.anchors[1].y() - self.anchors[0].y()) / dx
+            step = distance / (self.number_nodes + 2)
+            #self.number_nodes = int(distance / 10)
             for i in range(0, self.number_nodes):
-                # TODO
-                self.nodes.append(Node(i*10, i*10))
+                if (self.anchors[1].x() >= self.anchors[0].x()):
+                    # x += t
+                    x = self.anchors[0].x() + step * (i+1)
+                    # y += mx
+                    y = self.anchors[0].y() + m * ((i+1) * step)
+                else:
+                    x = self.anchors[0].x() - step * (i+1)
+                    y = self.anchors[0].y() - m * ((i+1) * step)
+                self.nodes.append(Node(x, y))
 
     def isClose(self, point):
-        # todo: clean-up, replace with anchors list
         id = 0
         for anchor in self.anchors:
             if (anchor != None):
-                distToAnchor = math.sqrt(math.pow(anchor.x() - point.x(), 2) + math.pow(anchor.y() - point.y(), 2))
+                distToAnchor = self.dist(anchor, point)
                 if (distToAnchor <= 10):
                     return anchor, id
             id += 1
         return None, None
+
+    def dist(self, point1, point2):
+        return math.sqrt(math.pow(point1.x() - point2.x(), 2) + math.pow(point1.y() - point2.y(), 2))
     
     def __repr__(self):
         string = "["
-        if (self.anchor1 != None):
-            string += "a1: ({0},{1})".format(self.anchor1.x(), self.anchor1.y())
-        if (self.anchor2 != None):
-            string += "\ta2: ({0},{1})".format(self.anchor2.x(), self.anchor2.y())
+        for anchor in self.anchors:
+            if (anchor != None):
+                string += "a: ({0},{1})".format(anchor.x(), anchor.y())
         return string + "]"
 
 class Window(QMainWindow):
