@@ -8,26 +8,32 @@ from copy import copy
 from functools import partial
 
 class KeyboardPushButton(QPushButton):
-    def __init__(self, x:int, y:int, parent=None):
+    def __init__(self, x:int, y:int, scale: float, parent=None):
         super().__init__(parent=parent)
-        self.setGeometry(x,y,52,52)
-        self.setFixedSize(52,52)
+        dim = 52 * scale
+        self.setGeometry(x,y,dim,dim)
+        self.setFixedSize(dim,dim)
         self.setFlat(True)
-        self.setStyleSheet("border: 0px; border-radius:26;")
+        self.bright_style = f"border: 0px; border-radius:{dim/2};"
+        self.dark_style = f"border: 0px; border-radius:{dim/2}" + \
+            ";background-color: rgba(0,0,0,0.3)"
+        self.setStyleSheet(self.bright_style)
         self.pressed.connect(self.darken)
         self.released.connect(self.brighten)
     
     def darken(self):
-        self.setStyleSheet("border: 0px; border-radius:26;background-color: rgba(0,0,0,0.3)")
+        self.setStyleSheet(self.dark_style)
 
     def brighten(self):
-        self.setStyleSheet("border: 0px; border-radius:26;")
+        self.setStyleSheet(self.bright_style)
 
 class Lamp(QLabel):
-    def __init__(self, x:int, y:int, letter:str, parent=None):
+    def __init__(self, x:int, y:int, letter:str, 
+                 scale:float, parent=None):
         super().__init__(parent=parent)
-        self.setGeometry(x,y,52,53)
         icon = QPixmap(f'images/letters/{letter}.png')
+        icon = icon.scaled(icon.width() * scale, icon.height() * scale)
+        self.setGeometry(x,y,icon.width(),icon.height())
         self.setPixmap(icon)
         self.disable()
 
@@ -39,7 +45,7 @@ class Lamp(QLabel):
 
 
 class EnigmaWindow(QWidget):
-    def __init__(self, **kwargs):
+    def __init__(self, scale, **kwargs):
         super().__init__()
         if not kwargs:
             kwargs = {
@@ -48,6 +54,7 @@ class EnigmaWindow(QWidget):
                 "rotors": [1,2,3],
                 "ringstellung": [1,1,1]
             }
+        self.scale = scale
         self.enigma = EnigmaMachine(**kwargs)
         self.title = 'Enigma'
         self.left = 10
@@ -69,27 +76,30 @@ class EnigmaWindow(QWidget):
         # Create background
         label = QLabel(self)
         pixmap = QPixmap('images/enigma.png')
+        scale = self.scale
+        pixmap = pixmap.scaled(pixmap.width()*scale, pixmap.height()*scale)
+
         label.setPixmap(pixmap)
         self.resize(pixmap.width(),pixmap.height())
 
         # Create settings knob
         knob = QPushButton(self)
-        knob.setGeometry(551,63,64,64)
-        knob.setFixedSize(64,64)
+        knob.setGeometry(551*scale,63*scale,64*scale,64*scale)
+        knob.setFixedSize(64*scale,64*scale)
         knob.setFlat(True)
-        knob.setStyleSheet("border: 0px; border-radius:32;")
+        knob.setStyleSheet(f"border: 0px; border-radius:{32*scale};")
         knob.clicked.connect(self.open_settings)
 
         # Create visible rotor settings
         for idx, pos in enumerate(("left","middle","right")):
             label = QLabel(self)
-            label.setGeometry(140+86*idx, 236, 30, 59)
-            label.setStyleSheet('color: white;font: 40px arial')
+            label.setGeometry((140+86*idx)*scale, 236*scale, 30*scale, 59*scale)
+            label.setStyleSheet(f'color: white;font: {int(40*scale)}px arial')
             label.setAlignment(Qt.AlignCenter)
             self.visible_settings[pos] = label
             # Create rotor to increment values with
             button = QPushButton(self)
-            button.setGeometry(188+87*idx, 174, 20, 153)
+            button.setGeometry((188+87*idx)*scale, 174*scale, 20*scale, 153*scale)
             button.setFlat(True)
             button.setStyleSheet("border: 0px")
             button.clicked.connect(partial(self.increment_rotor, pos))
@@ -99,31 +109,53 @@ class EnigmaWindow(QWidget):
         button_spacing = 22 + 52
         top_row = ['Q','W','E','R','T','Z','U','I','O']
         middle_row = ['A','S','D','F','G','H','J','K']
-        bottom_row = ['P','Y','X','C','V','B','N','M','L']            
+        bottom_row = ['P','Y','X','C','V','B','N','M','L']      
 
-        for offset, letter in enumerate(top_row):
-            lamp = Lamp(80+offset*button_spacing, 410, letter, self)
-            button = KeyboardPushButton(80+offset*button_spacing,659,self)
-            self.lamps[letter] = lamp
-            self.keyboard[letter] = button
-            button.pressed.connect(partial(self.key_pressed, letter))
-            button.released.connect(partial(self.key_released, letter))
+        row_settings = (
+            (top_row, {"x_start":80,"lamp_y":410, "button_y": 659}),
+            (middle_row, {"x_start":117,"lamp_y":481, "button_y": 730}),
+            (bottom_row, {"x_start":80,"lamp_y":552, "button_y": 799}),
+        )
 
-        for offset, letter in enumerate(middle_row):
-            lamp = Lamp(117+offset*button_spacing,481,letter,self)
-            button = KeyboardPushButton(117+offset*button_spacing,730,self)
-            self.lamps[letter] = lamp
-            self.keyboard[letter] = button
-            button.pressed.connect(partial(self.key_pressed, letter))
-            button.released.connect(partial(self.key_released, letter))
+        for row, settings in row_settings:
+            for offset, letter in enumerate(row):
+                lamp = Lamp(
+                    (settings["x_start"]+offset*button_spacing)*scale, 
+                    settings["lamp_y"]*scale, letter, scale, self
+                )
+                button = KeyboardPushButton(
+                    (settings["x_start"]+offset*button_spacing)*scale,
+                    settings["button_y"]*scale,scale, self
+                )
+                self.lamps[letter] = lamp
+                self.keyboard[letter] = button
+                button.pressed.connect(partial(self.key_pressed, letter))
+                button.released.connect(partial(self.key_released, letter))
 
-        for offset, letter in enumerate(bottom_row):
-            lamp = Lamp(80+offset*button_spacing,552,letter,self)
-            button = KeyboardPushButton(80+offset*button_spacing,799,self)
-            self.lamps[letter] = lamp
-            self.keyboard[letter] = button
-            button.pressed.connect(partial(self.key_pressed, letter))
-            button.released.connect(partial(self.key_released, letter))
+        # for offset, letter in enumerate(top_row):
+            
+
+        # for offset, letter in enumerate(middle_row):
+        #     lamp = Lamp(
+        #         (117+offset*button_spacing)*scale,
+        #         481*scale,letter,self.is_scale,self
+        #     )
+        #     button = KeyboardPushButton(
+        #         (117+offset*button_spacing)*scale,
+        #         730,self.is_scale, self
+        #     )
+        #     self.lamps[letter] = lamp
+        #     self.keyboard[letter] = button
+        #     button.pressed.connect(partial(self.key_pressed, letter))
+        #     button.released.connect(partial(self.key_released, letter))
+
+        # for offset, letter in enumerate(bottom_row):
+        #     lamp = Lamp(80+offset*button_spacing,552,letter,self)
+        #     button = KeyboardPushButton(80+offset*button_spacing,799,self)
+        #     self.lamps[letter] = lamp
+        #     self.keyboard[letter] = button
+        #     button.pressed.connect(partial(self.key_pressed, letter))
+        #     button.released.connect(partial(self.key_released, letter))
 
         self.show()
 
